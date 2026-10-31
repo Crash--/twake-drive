@@ -125,6 +125,18 @@ const LayoutContent = () => {
                   label={t('upload.label')}
                   displayedFolder={displayedFolder}
                 />
+                <UploadButton
+                  isDirectory
+                  folderId={null}
+                  onUploadStart={() => goToRoot()}
+                  componentsProps={{
+                    button: {
+                      className: 'u-w-100 u-bdrs-6 u-fz-small u-mt-half'
+                    }
+                  }}
+                  label={t('toolbar.menu_upload_folder')}
+                  displayedFolder={displayedFolder}
+                />
               </div>
             ) : isDesktop ? (
               <div className="u-mh-1 u-mt-half">
@@ -149,6 +161,19 @@ const LayoutContent = () => {
                     }
                   }}
                   label={t('upload.label')}
+                  displayedFolder={displayedFolder}
+                />
+                <UploadButton
+                  isDirectory
+                  disabled={isReadOnly}
+                  folderId={rawFolderId}
+                  driveId={driveId}
+                  componentsProps={{
+                    button: {
+                      className: 'u-w-100 u-bdrs-6 u-fz-small u-mt-half'
+                    }
+                  }}
+                  label={t('toolbar.menu_upload_folder')}
                   displayedFolder={displayedFolder}
                 />
               </div>
