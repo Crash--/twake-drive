@@ -31,3 +31,24 @@ test('a restored state replaces the room content', async () => {
   assert.match(md, /version 1/)
   assert.doesNotMatch(md, /version 2/)
 })
+
+test('the export keeps commented text and never touches the room', async () => {
+  const editor = ServerBlockNoteEditor.create()
+  const room = editor.blocksToYDoc([{ type: 'paragraph', content: 'texte commenté' }], 'document-store')
+  const walk = node => (node instanceof Y.XmlText ? [node] : (node.toArray?.() || []).flatMap(walk))
+  const [text] = walk(room.getXmlFragment('document-store'))
+  text.format(0, 5, { comment: { threadId: 't1', orphan: false } })
+  const before = Y.encodeStateVector(room)
+  const md = await toMarkdown(room)
+  assert.match(md, /texte commenté/)
+  assert.deepEqual(Y.encodeStateVector(room), before)
+  assert.match(room.getXmlFragment('document-store').toString(), /texte/)
+})
+
+test('the export keeps mentions', async () => {
+  const { schema } = await import('./schema.mjs')
+  const editor = ServerBlockNoteEditor.create({ schema })
+  const room = editor.blocksToYDoc([{ type: 'paragraph', content: [{ type: 'text', text: 'pour ', styles: {} }, { type: 'mention', props: { user: 'member:bob', name: 'Bob' } }] }], 'document-store')
+  const md = await toMarkdown(room)
+  assert.match(md, /pour @Bob/)
+})

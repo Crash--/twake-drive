@@ -1,8 +1,15 @@
 import { createHmac, timingSafeEqual } from 'node:crypto'
 
+import {
+  CommentsExtension,
+  DefaultThreadStoreAuth,
+  YjsThreadStore
+} from '@blocknote/core/comments'
 import { ServerBlockNoteEditor } from '@blocknote/server-util'
 import { Server } from '@hocuspocus/server'
 import * as Y from 'yjs'
+
+import { schema } from './schema.mjs'
 
 const PORT = Number(process.env.PORT || 4603)
 // Shared with cozy-stack (collab.<context>.secret): the stack signs the room
@@ -90,10 +97,39 @@ const storeWith = async (save, room, document, documentName) => {
   log('store', documentName, 'rev', room.rev)
 }
 
-const editor = ServerBlockNoteEditor.create()
+// The export editor must know every mark the browsers write (comments): when
+// y-prosemirror cannot build a node with its schema, it deletes that node
+// from the Y.Doc. The conversion also runs on a copy, never on the room.
+const editor = ServerBlockNoteEditor.create({
+  schema,
+  extensions: [
+    CommentsExtension({
+      threadStore: new YjsThreadStore('export', new Y.Doc().getMap('threads'), new DefaultThreadStoreAuth('export', 'comment')),
+      resolveUsers: async () => []
+    })
+  ]
+})
 // shortcut: images keep their cozy-attachment:// URL in the export, which only
 // the editor can resolve; rewrite them to a stack URL for a real preview.
-export const toMarkdown = doc => editor.blocksToMarkdownLossy(editor.yDocToBlocks(doc, FRAGMENT))
+export const toMarkdown = doc => {
+  const copy = new Y.Doc()
+  Y.applyUpdate(copy, Y.encodeStateAsUpdate(doc))
+  return editor.blocksToMarkdownLossy(editor.yDocToBlocks(copy, FRAGMENT))
+}
+
+// A room token lives one minute; the editor sends a fresh one before that.
+// A connection whose token was not renewed (right revoked, or a client that
+// does not play along) is closed by the sweep.
+const sessions = new Map()
+
+const checkRoomToken = (token, documentName) => {
+  const claims = verifyJWT(token, SECRET)
+  if (!claims.aud?.includes('collab')) throw new Error('bad audience')
+  if (documentName !== `${claims.iss}/${claims.sub}`) throw new Error('room mismatch')
+  const instance = checkInstance(claims.instance)
+  if (new URL(instance).host !== claims.iss) throw new Error('issuer mismatch')
+  return { claims, instance }
+}
 
 const server = new Server({
   port: PORT,
@@ -102,14 +138,26 @@ const server = new Server({
   maxDebounce: 15000,
 
   async onAuthenticate({ token, documentName, connectionConfig }) {
-    const claims = verifyJWT(token, SECRET)
-    if (!claims.aud?.includes('collab')) throw new Error('bad audience')
-    if (documentName !== `${claims.iss}/${claims.sub}`) throw new Error('room mismatch')
-    const instance = checkInstance(claims.instance)
-    if (new URL(instance).host !== claims.iss) throw new Error('issuer mismatch')
+    const { claims, instance } = checkRoomToken(token, documentName)
     connectionConfig.readOnly = claims.mode !== 'edit'
     if (!rooms.has(documentName)) rooms.set(documentName, { instance, domain: claims.iss, fileId: claims.sub, rev: null })
-    log('auth', documentName, claims.mode)
+    log('auth', documentName, claims.mode, claims.user)
+    return { exp: claims.exp, user: claims.user }
+  },
+
+  async connected({ connection, context, documentName, socketId }) {
+    sessions.set(`${socketId}/${documentName}`, { connection, exp: context.exp, user: context.user, documentName })
+  },
+
+  async onTokenSync({ token, connection, documentName, socketId }) {
+    const { claims } = checkRoomToken(token, documentName)
+    const session = sessions.get(`${socketId}/${documentName}`)
+    if (session) session.exp = claims.exp
+    connection.readOnly = claims.mode !== 'edit'
+  },
+
+  async onDisconnect({ documentName, socketId }) {
+    sessions.delete(`${socketId}/${documentName}`)
   },
 
   async onLoadDocument({ document, documentName }) {
@@ -171,8 +219,20 @@ const poll = async () => {
   }
 }
 
+const sweep = () => {
+  const now = Date.now() / 1000
+  for (const [key, session] of sessions) {
+    if (session.exp < now) {
+      sessions.delete(key)
+      session.connection.close({ code: 4401, reason: 'token expired' })
+      log('closed, token expired', session.documentName, session.user)
+    }
+  }
+}
+
 if (process.argv[1] === new URL(import.meta.url).pathname) {
   if (!SECRET) throw new Error('COLLAB_SECRET is required')
   setInterval(poll, POLL_MS)
+  setInterval(sweep, 5000)
   server.listen().then(() => log(`collab listening on ${PORT}`))
 }
