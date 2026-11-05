@@ -1,10 +1,6 @@
 import flag from 'cozy-flags'
 
-import {
-  EDITOR_ATTACHMENTS_DIR_ID,
-  SETTINGS_DIR_PATH,
-  TRASH_DIR_ID
-} from '@/constants/config'
+import { SETTINGS_DIR_PATH, TRASH_DIR_ID } from '@/constants/config'
 
 export interface FolderContentPartialFilter {
   _id: { $nin: string[] }
@@ -13,7 +9,7 @@ export interface FolderContentPartialFilter {
 
 export function getFolderContentPartialFilter(): FolderContentPartialFilter {
   const partialIndexFilters: FolderContentPartialFilter = {
-    _id: { $nin: [TRASH_DIR_ID, EDITOR_ATTACHMENTS_DIR_ID] }
+    _id: { $nin: [TRASH_DIR_ID] }
   }
 
   if (flag('home.wallpaper-personalization.enabled')) {

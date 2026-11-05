@@ -5,8 +5,6 @@
 // global variables
 export const ROOT_DIR_ID = 'io.cozy.files.root-dir'
 export const TRASH_DIR_ID = 'io.cozy.files.trash-dir'
-// Images of the Docs notes: regular files, read through the note's rights.
-export const EDITOR_ATTACHMENTS_DIR_ID = 'io.cozy.files.editor-attachments-dir'
 export const SHAREDWITHME_DIR_ID = 'io.cozy.files.shared-with-me-dir'
 export const SHARED_DRIVES_DIR_ID = 'io.cozy.files.shared-drives-dir'
 export const SETTINGS_DIR_PATH = '/Settings'

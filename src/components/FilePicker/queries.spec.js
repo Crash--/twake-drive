@@ -7,7 +7,6 @@ import {
 } from './queries'
 
 import {
-  EDITOR_ATTACHMENTS_DIR_ID,
   ROOT_DIR_ID,
   SETTINGS_DIR_PATH,
   TRASH_DIR_ID
@@ -86,7 +85,7 @@ describe('FilePicker queries', () => {
         sortOrder: 'asc'
       }).definition()
       const expectedFilter = {
-        _id: { $nin: [TRASH_DIR_ID, EDITOR_ATTACHMENTS_DIR_ID] },
+        _id: { $nin: [TRASH_DIR_ID] },
         ...(hidden
           ? {
               path: { $or: [{ $exists: false }, { $nin: [SETTINGS_DIR_PATH] }] }
