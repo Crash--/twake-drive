@@ -4,7 +4,7 @@ import flag from 'cozy-flags'
 
 import { getFolderContentPartialFilter } from './getFolderContentPartialFilter'
 
-import { TRASH_DIR_ID } from '@/constants/config'
+import { EDITOR_ATTACHMENTS_DIR_ID, TRASH_DIR_ID } from '@/constants/config'
 import {
   DOCTYPE_AI_CHAT_ASSISTANTS,
   DOCTYPE_ALBUMS,
@@ -74,7 +74,7 @@ export const buildRecentQuery: QueryBuilder = () => ({
       .partialIndex({
         type: 'file',
         trashed: false,
-        dir_id: { $nin: [TRASH_DIR_ID] }
+        dir_id: { $nin: [TRASH_DIR_ID, EDITOR_ATTACHMENTS_DIR_ID] }
       })
       .indexFields(['updated_at'])
       .sortBy([{ updated_at: 'desc' }])
