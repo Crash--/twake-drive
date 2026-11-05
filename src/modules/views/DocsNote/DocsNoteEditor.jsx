@@ -158,7 +158,16 @@ const DocsNoteEditor = ({ file, isReadOnly = false }) => {
         provider = new HocuspocusProvider({
           url: access.url,
           name: access.room,
-          token: async () => (await fetchCollabAccess(client, file._id)).token,
+          // A renewed token can change the mode (member made read-only).
+          token: async () => {
+            const renewed = await fetchCollabAccess(client, file._id)
+            setState(prev =>
+              prev.status === 'synced' && prev.access.mode !== renewed.mode
+                ? { ...prev, access: { ...prev.access, mode: renewed.mode } }
+                : prev
+            )
+            return renewed.token
+          },
           onSynced: () =>
             setState({ status: 'synced', provider, access, people }),
           onAuthenticationFailed: deny,
