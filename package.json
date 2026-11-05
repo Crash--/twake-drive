@@ -83,6 +83,9 @@
     "undici": "^6.29.1"
   },
   "dependencies": {
+    "@blocknote/core": "0.51.4",
+    "@blocknote/mantine": "0.51.4",
+    "@blocknote/react": "0.51.4",
     "@embedpdf/default-stamps": "0.0.1",
     "@embedpdf/fonts-arabic": "1.0.0",
     "@embedpdf/fonts-hebrew": "1.0.0",
@@ -91,8 +94,11 @@
     "@embedpdf/pdfium": "2.14.3",
     "@embedpdf/react-pdf-viewer": "2.14.3",
     "@excalidraw/excalidraw": "0.18.1",
+    "@hocuspocus/provider": "3.4.4",
     "@linagora/twake-embed": "^3.4.0",
     "@linagora/twake-icons": "^2.13.1",
+    "@mantine/core": "^8.3.11",
+    "@mantine/hooks": "^8.3.11",
     "@sentry/react": "7.120.4",
     "classnames": "2.3.1",
     "cozy-bar": "^36.2.0",
@@ -140,7 +146,9 @@
     "redux-mock-store": "1.5.4",
     "redux-thunk": "2.4.2",
     "twake-i18n": "^0.7.0",
-    "whatwg-fetch": "3.0.0"
+    "whatwg-fetch": "3.0.0",
+    "y-protocols": "1.0.7",
+    "yjs": "^13.6.27"
   },
   "resolutions": {
     "lodash-es@npm:4.17.21": "npm:4.18.1",

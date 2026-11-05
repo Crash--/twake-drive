@@ -7,6 +7,7 @@ import { AssistantView } from 'cozy-search'
 
 import AIAssistantPaywallView from '../views/AI/AIAssistantPaywallView'
 import AssistantLayout from '../views/Assistant/AssistantLayout'
+import { getDocsNoteRoutes } from '../views/DocsNote/routes'
 import { DriveFolderView } from '../views/Drive/DriveFolderView'
 import FilesViewerDrive from '../views/Drive/FilesViewerDrive'
 import { getExcalidrawRoutes } from '../views/Excalidraw/routes'
@@ -181,6 +182,7 @@ const sharedDriveRoutes = () => (
 
 const getEditorRoutes = () => (
   <>
+    {getDocsNoteRoutes()}
     {flag('drive.excalidraw.enabled') && getExcalidrawRoutes()}
     {flag('drive.pdf-editor.enabled') && getPdfRoutes()}
   </>

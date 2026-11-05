@@ -28,6 +28,10 @@ import {
   isResolvableFileRootSharedDriveShortcut
 } from '@/modules/shareddrives/rootFileNavigation'
 import {
+  isDocsNote,
+  makeDocsNoteFileRoute
+} from '@/modules/views/DocsNote/helpers'
+import {
   isExcalidraw,
   makeExcalidrawFileRoute
 } from '@/modules/views/Excalidraw/helpers'
@@ -91,6 +95,8 @@ export const computeFileType = (
     return 'docs'
   } else if (isGrist(file)) {
     return 'grist'
+  } else if (isDocsNote(file)) {
+    return 'docsnote'
   } else if (isExcalidraw(file) && isExcalidrawEnabled) {
     return 'excalidraw'
   } else if (file.driveId && isResolvableFileRootSharedDriveShortcut(file)) {
@@ -236,6 +242,12 @@ export const computePath = (
       return paths.length === 1 ? file._id : `../${file._id}`
     case 'onlyoffice':
       return makeOnlyOfficeFileRoute(file._id, {
+        driveId,
+        fromPathname: pathname,
+        fromPublicFolder: isPublic
+      })
+    case 'docsnote':
+      return makeDocsNoteFileRoute(file._id, {
         driveId,
         fromPathname: pathname,
         fromPublicFolder: isPublic

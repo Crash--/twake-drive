@@ -4,6 +4,7 @@ import flag from 'cozy-flags'
 import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
 
 import CreateDocsItem from '@/modules/drive/Toolbar/components/CreateDocsItem'
+import CreateDocsNoteItem from '@/modules/drive/Toolbar/components/CreateDocsNoteItem'
 import CreateExcalidrawItem from '@/modules/drive/Toolbar/components/CreateExcalidrawItem'
 import CreateGristItem from '@/modules/drive/Toolbar/components/CreateGristItem'
 import CreateNoteItem from '@/modules/drive/Toolbar/components/CreateNoteItem'
@@ -36,6 +37,9 @@ const CreateDocumentItems = ({
           isReadOnly={isReadOnly}
           onClick={onClick}
         />
+      )}
+      {!isPublic && (
+        <CreateDocsNoteItem isReadOnly={isReadOnly} onClick={onClick} />
       )}
       {flag('drive.excalidraw.enabled') && (!isPublic || canUpload) && (
         <CreateExcalidrawItem isReadOnly={isReadOnly} onClick={onClick} />

@@ -9,6 +9,8 @@ import ExternalRedirect from '@/modules/navigation/ExternalRedirect'
 import { PublicNoteRedirect } from '@/modules/navigation/PublicNoteRedirect'
 import LightFileViewer from '@/modules/public/LightFileViewer'
 import PublicLayout from '@/modules/public/PublicLayout'
+import { isDocsNote } from '@/modules/views/DocsNote/helpers'
+import { getPublicDocsNoteRoutes } from '@/modules/views/DocsNote/routes'
 import {
   isExcalidraw,
   isExcalidrawEnabled
@@ -31,6 +33,7 @@ import { PublicFolderView } from '@/modules/views/Public/PublicFolderView'
 // Group the flag-gated editor routes so the AppRouter switch stays small.
 const getPublicEditorRoutes = ({ isReadOnly, isExcalidrawShared, data }) => (
   <>
+    {getPublicDocsNoteRoutes({ isReadOnly, isShared: isDocsNote(data), data })}
     {isExcalidrawEnabled() &&
       getPublicExcalidrawRoutes({
         isReadOnly,
