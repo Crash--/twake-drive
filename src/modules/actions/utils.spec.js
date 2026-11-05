@@ -88,6 +88,23 @@ describe('downloadFiles', () => {
     expect(mockDownload).toHaveBeenCalledWith(file, null, file.name)
   })
 
+  it('downloads the markdown export of a Docs note', async () => {
+    const createObjectURL = jest.fn(() => 'blob:note')
+    global.URL.createObjectURL = createObjectURL
+    const file = {
+      id: 'note-id-1',
+      name: 'Note.docsnote',
+      type: 'file',
+      metadata: { markdown: '# Title' }
+    }
+    mockDownload.mockClear()
+    await downloadFiles(mockClient, [file])
+    expect(mockDownload).not.toHaveBeenCalled()
+    const blob = createObjectURL.mock.calls[0][0]
+    expect(blob.type).toEqual('text/markdown')
+    expect(blob.size).toEqual('# Title'.length)
+  })
+
   it('downloads a folder', async () => {
     const folder = {
       id: 'folder-id-1',

@@ -2,6 +2,7 @@ import { isDirectory } from 'cozy-client/dist/models/file'
 import { receiveQueryResult } from 'cozy-client/dist/store'
 
 import { DOCTYPE_FILES } from '@/lib/doctypes'
+import { isDocsNote } from '@/modules/views/DocsNote/helpers'
 
 const downloadFileError = error => {
   switch (error.status) {
@@ -39,6 +40,18 @@ export const downloadFiles = async (client, files, { showAlert, t } = {}) => {
   try {
     if (files.length === 1 && !isDirectory(files[0])) {
       const file = files[0]
+      // The content of a Docs note is a Yjs state: hand out the readable
+      // export the collab server keeps in the metadata instead.
+      // shortcut: archives of several files still hold the Yjs state.
+      if (isDocsNote(file) && file.metadata?.markdown !== undefined) {
+        const link = document.createElement('a')
+        link.href = URL.createObjectURL(
+          new Blob([file.metadata.markdown], { type: 'text/markdown' })
+        )
+        link.download = file.name.replace(/\.docsnote$/, '.md')
+        link.click()
+        return
+      }
       return await collection.download(file, null, file.name)
     }
     return await collection.downloadArchive(files.map(f => f.id))
