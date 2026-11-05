@@ -31,12 +31,7 @@ const Editor = ({ fileId, driveId, isPublic, isReadOnly }) => {
         isPublic={isPublic}
         isReadOnly={isReadOnly}
       />
-      <DocsNoteEditor
-        key={file._id}
-        file={file}
-        isPublic={isPublic}
-        isReadOnly={isReadOnly}
-      />
+      <DocsNoteEditor key={file._id} file={file} isReadOnly={isReadOnly} />
     </>
   )
 }

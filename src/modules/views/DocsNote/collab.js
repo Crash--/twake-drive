@@ -33,3 +33,10 @@ export const makeAttachmentHandlers = (client, noteId) => {
     }
   }
 }
+
+// Who can read the note (owner and members of the sharings containing it),
+// for mentions and comment authors.
+export const fetchPeople = (client, fileId) =>
+  client
+    .getStackClient()
+    .fetchJSON('GET', `/editor/${encodeURIComponent(fileId)}/people`)
