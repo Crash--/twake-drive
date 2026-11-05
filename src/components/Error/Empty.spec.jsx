@@ -5,6 +5,7 @@ import { MemoryRouter } from 'react-router-dom'
 import { EmptyDrive, EmptyTrash } from './Empty'
 
 import { ROUTER_FUTURE_FLAGS } from '@/constants/config'
+import useCurrentFolderWriteAccess from '@/hooks/useCurrentFolderWriteAccess'
 
 jest.mock('@linagora/twake-icons', () => ({
   Icon: ({ icon, size }) => (
@@ -35,15 +36,18 @@ jest.mock('cozy-ui/transpiled/react/providers/Breakpoints', () => ({
   default: () => ({ isDesktop: true })
 }))
 jest.mock('twake-i18n', () => ({ useI18n: () => ({ t: key => key }) }))
+let mockFolderId = 'folder-id'
 jest.mock('@/hooks', () => ({
-  useCurrentFolderId: () => 'folder-id',
+  useCurrentFolderId: () => mockFolderId,
   useDisplayedFolder: () => ({ displayedFolder: null })
 }))
 jest.mock('@/modules/shareddrives/hooks/useSharedDriveFolder', () => ({
   useSharedDriveFolder: () => ({ sharedDriveResult: null })
 }))
+jest.mock('@/hooks/useCurrentFolderWriteAccess', () => jest.fn())
 jest.mock('@/modules/upload/UploadButton', () => ({
-  UploadButton: () => null
+  UploadButton: ({ isDirectory, disabled }) =>
+    isDirectory && !disabled ? <span data-testid="upload-folder" /> : null
 }))
 
 const renderAt = (pathname, ui) =>
@@ -57,6 +61,31 @@ const getIllustration = () => screen.getByTestId('illustration')
 const getContainer = () => getIllustration().parentElement
 
 describe('Empty', () => {
+  beforeEach(() => {
+    useCurrentFolderWriteAccess.mockReturnValue(true)
+    mockFolderId = 'folder-id'
+  })
+
+  it('offers the folder upload with write access', () => {
+    renderAt('/folder/folder-id', <EmptyDrive />)
+
+    expect(screen.queryByTestId('upload-folder')).toBeInTheDocument()
+  })
+
+  it('does not offer the folder upload in a view without a current folder', () => {
+    mockFolderId = null
+    renderAt('/nextcloud/account', <EmptyDrive />)
+
+    expect(screen.queryByTestId('upload-folder')).toBe(null)
+  })
+
+  it('does not offer the folder upload in a read-only folder', () => {
+    useCurrentFolderWriteAccess.mockReturnValue(false)
+    renderAt('/folder/folder-id', <EmptyDrive />)
+
+    expect(screen.queryByTestId('upload-folder')).toBe(null)
+  })
+
   it('shows the folder illustration at 160 px in a 10 rem container in Drive', () => {
     renderAt('/folder/folder-id', <EmptyDrive />)
 
