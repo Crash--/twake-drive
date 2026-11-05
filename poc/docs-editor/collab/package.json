@@ -1,0 +1,15 @@
+{
+  "name": "poc-editor-collab",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node server.mjs",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "@blocknote/core": "^0.51.4",
+    "@blocknote/server-util": "^0.51.4",
+    "@hocuspocus/server": "3.4.4",
+    "yjs": "^13.6.27"
+  }
+}

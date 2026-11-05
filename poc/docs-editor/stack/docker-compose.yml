@@ -1,0 +1,82 @@
+name: poc-editor
+
+services:
+  couchdb:
+    image: couchdb:3
+    environment:
+      COUCHDB_USER: admin
+      COUCHDB_PASSWORD: ${COUCHDB_PASSWORD}
+    volumes:
+      - couchdb:/opt/couchdb/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:5984/ || exit 1"]
+      interval: 5s
+      retries: 20
+
+  # Owns the network namespace: every *.100-86-182-33.nip.io name resolves to
+  # loopback inside, so the stack reaches its own instances (shared drives) and
+  # the collab server reaches the stack without leaving the namespace.
+  coredns:
+    image: coredns/coredns:1.15.0@sha256:0a9d8c8ddf34347eb59aad9a8784f0710de88d6d112726d11d271f9bc6daca26
+    dns: [127.0.0.1]
+    command: ["-conf", "/etc/coredns/Corefile"]
+    configs:
+      - source: corefile
+        target: /etc/coredns/Corefile
+    ports:
+      - "100.86.182.33:4600:4600"
+      - "127.0.0.1:4601:4601"
+      - "100.86.182.33:4603:4603"
+
+  cozystack:
+    image: cozy/cozy-stack:latest
+    pull_policy: never
+    network_mode: "service:coredns"
+    depends_on:
+      couchdb:
+        condition: service_healthy
+    environment:
+      COZY_ADMIN_PASSPHRASE: ${COZY_ADMIN_PASSPHRASE}
+      COZY_COUCHDB_URL: http://admin:${COUCHDB_PASSWORD}@couchdb:5984/
+      COLLAB_SECRET: ${COLLAB_SECRET}
+    command: ["cozy-stack", "serve", "--dev", "--config", "/etc/cozy/cozy.yml", "--appdir", "drive:/app/drive"]
+    volumes:
+      - ../../../build:/app/drive:ro
+      - ./cozy.yml:/etc/cozy/cozy.yml:ro
+      # cozy-stack built from the poc/docs-editor-collab branch (see README)
+      - ./bin/cozy-stack:/usr/local/bin/cozy-stack:ro
+      - storage:/var/lib/cozy/storage
+
+  collab:
+    image: node:24-alpine
+    network_mode: "service:coredns"
+    working_dir: /app
+    environment:
+      PORT: "4603"
+      INSTANCE_DOMAIN: 100-86-182-33.nip.io
+      COLLAB_SECRET: ${COLLAB_SECRET}
+    command: ["node", "server.mjs"]
+    volumes:
+      - ../collab:/app:ro
+    restart: unless-stopped
+
+volumes:
+  couchdb:
+  storage:
+
+configs:
+  corefile:
+    content: |
+      100-86-182-33.nip.io:53 {
+          errors
+          template IN A 100-86-182-33.nip.io {
+              answer "{{ .Name }} 60 IN A 127.0.0.1"
+          }
+          template IN AAAA 100-86-182-33.nip.io {
+              rcode NOERROR
+          }
+      }
+      .:53 {
+          errors
+          forward . 1.1.1.1 9.9.9.9
+      }

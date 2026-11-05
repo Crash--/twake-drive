@@ -1,0 +1,47 @@
+host: 0.0.0.0
+port: 4600
+
+admin:
+  host: 0.0.0.0
+  port: 4601
+
+subdomains: flat
+
+safe_http:
+  trusted_private_networks:
+    - 127.0.0.1/32
+
+registries:
+  - https://apps-registry.cozycloud.cc/
+
+fs:
+  url: file:///var/lib/cozy/storage
+  versioning:
+    max_number_of_versions_to_keep: 20
+    # shortcut: 1 minute so the demo shows versions; the default is 15 minutes.
+    min_delay_between_two_versions: 1m
+
+csp_allowlist:
+  connect: ws://collab.100-86-182-33.nip.io:4603
+
+collab:
+  default:
+    url: ws://collab.100-86-182-33.nip.io:4603
+    secret: {{.Env.COLLAB_SECRET}}
+
+mail:
+  disable_tls: true
+  skip_certificate_validation: true
+  host: localhost
+  port: 25
+  noreply_address: noreply@100-86-182-33.nip.io
+  noreply_name: POC editor
+
+contexts:
+  default:
+    default_redirection: drive/
+    sharing:
+      auto_accept_trusted: true
+      auto_accept_trusted_contacts: true
+      trusted_domains:
+        - 100-86-182-33.nip.io
