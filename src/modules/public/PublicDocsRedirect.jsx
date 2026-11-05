@@ -12,23 +12,28 @@ const PublicDocsRedirect = ({ file }) => {
   const client = useClient()
   const { t } = useI18n()
   const [failed, setFailed] = useState(false)
+  const metadataUrl = file.metadata?.docs_url
 
   useEffect(() => {
     const redirect = async () => {
       const sharecode = new URLSearchParams(window.location.search).get(
         'sharecode'
       )
-      const res = await client
-        .collection('io.cozy.files')
-        .fetchFileContentById(file.id)
-      const match = (await res.text()).match(/^URL=(.+)$/m)
-      if (!match || !sharecode) throw new Error('not a Docs pointer')
-      const url = new URL(match[1].trim())
+      let docsUrl = metadataUrl
+      if (!docsUrl) {
+        const res = await client
+          .collection('io.cozy.files')
+          .fetchFileContentById(file.id)
+        const match = (await res.text()).match(/(?:docs: |URL=)(\S+)/)
+        docsUrl = match?.[1]
+      }
+      if (!docsUrl || !sharecode) throw new Error('not a Docs pointer')
+      const url = new URL(docsUrl)
       url.searchParams.set('sharecode', sharecode)
       window.location.replace(url.toString())
     }
     redirect().catch(() => setFailed(true))
-  }, [client, file.id])
+  }, [client, file.id, metadataUrl])
 
   if (failed) {
     return (

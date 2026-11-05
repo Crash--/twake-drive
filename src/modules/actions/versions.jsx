@@ -1,7 +1,7 @@
 import { Icon, History } from '@linagora/twake-icons'
 import React, { forwardRef } from 'react'
 
-import { isFile } from 'cozy-client/dist/models/file'
+import { isDocs, isFile } from 'cozy-client/dist/models/file'
 import ActionsMenuItem from 'cozy-ui/transpiled/react/ActionsMenu/ActionsMenuItem'
 import ListItemIcon from 'cozy-ui/transpiled/react/ListItemIcon'
 import ListItemText from 'cozy-ui/transpiled/react/ListItemText'
@@ -34,7 +34,10 @@ export const versions = ({ t, navigate, pathname }) => {
     icon,
     allowInfectedFiles: false,
     displayCondition: selection => {
-      return selection.length === 1 && isFile(selection[0])
+      // A Docs pointer's history lives in Docs: the file only holds an export.
+      return (
+        selection.length === 1 && isFile(selection[0]) && !isDocs(selection[0])
+      )
     },
     action: files => {
       return navigateToModal({ navigate, pathname, files, path: 'revision' })

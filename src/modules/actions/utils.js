@@ -1,4 +1,4 @@
-import { isDirectory } from 'cozy-client/dist/models/file'
+import { isDirectory, isDocs } from 'cozy-client/dist/models/file'
 import { receiveQueryResult } from 'cozy-client/dist/store'
 
 import { DOCTYPE_FILES } from '@/lib/doctypes'
@@ -22,6 +22,10 @@ const downloadFileError = error => {
  * @param {CozyClient} client
  * @param {array} files  One or more files to download
  */
+// A Docs pointer holds a Markdown export of the document.
+const downloadName = file =>
+  isDocs(file) ? file.name.replace(/\.docs-note$/, '.md') : file.name
+
 export const downloadFiles = async (client, files, { showAlert, t } = {}) => {
   if (files.length === 1 && !isDirectory(files[0])) {
     const file = files[0]
@@ -29,7 +33,7 @@ export const downloadFiles = async (client, files, { showAlert, t } = {}) => {
     try {
       return await client
         .collection(DOCTYPE_FILES, { driveId })
-        .download(file, null, file.name)
+        .download(file, null, downloadName(file))
     } catch (error) {
       showAlert({
         message: t(downloadFileError(error)),
