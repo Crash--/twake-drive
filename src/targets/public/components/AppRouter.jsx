@@ -1,6 +1,7 @@
 import React from 'react'
 import { Route, Navigate } from 'react-router-dom'
 
+import { isDocs } from 'cozy-client/dist/models/file'
 import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
 
 import FileHistory from '@/components/FileHistory'
@@ -8,6 +9,7 @@ import { SentryRoutes } from '@/lib/sentry'
 import ExternalRedirect from '@/modules/navigation/ExternalRedirect'
 import { PublicNoteRedirect } from '@/modules/navigation/PublicNoteRedirect'
 import LightFileViewer from '@/modules/public/LightFileViewer'
+import { PublicDocsRedirect } from '@/modules/public/PublicDocsRedirect'
 import PublicLayout from '@/modules/public/PublicLayout'
 import {
   isExcalidraw,
@@ -93,7 +95,11 @@ const AppRouter = ({
 
         {getPublicEditorRoutes({ isReadOnly, isExcalidrawShared, data })}
 
-        {isFile && (
+        {isFile && isDocs(data) && (
+          <Route path="/" element={<PublicDocsRedirect file={data} />} />
+        )}
+
+        {isFile && !isDocs(data) && (
           <Route
             path="/"
             element={<LightFileViewer files={[data]} isPublic={true} />}
