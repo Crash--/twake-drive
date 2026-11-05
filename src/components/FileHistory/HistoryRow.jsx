@@ -1,7 +1,7 @@
 import PropTypes from 'prop-types'
 import React from 'react'
 
-import { Icon, Download, File, Trash } from '@linagora/twake-icons'
+import { Icon, Download, File, Restore, Trash } from '@linagora/twake-icons'
 import IconButton from 'cozy-ui/transpiled/react/IconButton'
 import ListItem from 'cozy-ui/transpiled/react/ListItem'
 import ListItemIcon from 'cozy-ui/transpiled/react/ListItemIcon'
@@ -14,6 +14,7 @@ export const HistoryRow = ({
   primaryText,
   secondaryText,
   onDownload,
+  onRestore,
   onDelete
 }) => {
   const { t } = useI18n()
@@ -35,6 +36,15 @@ export const HistoryRow = ({
         >
           <Icon icon={Download} color="var(--secondaryTextColor)" />
         </IconButton>
+        {onRestore && (
+          <IconButton
+            aria-label="Restaurer cette version"
+            data-testid="history-row-restore"
+            onClick={onRestore}
+          >
+            <Icon icon={Restore} color="var(--secondaryTextColor)" />
+          </IconButton>
+        )}
         {onDelete && (
           <IconButton
             aria-label={t('History.deleteVersion.action')}
@@ -55,6 +65,8 @@ HistoryRow.propTypes = {
   primaryText: PropTypes.string,
   secondaryText: PropTypes.string,
   onDownload: PropTypes.func.isRequired,
+  /** When omitted, the row offers no restore action */
+  onRestore: PropTypes.func,
   /** When omitted, the row offers no delete action */
   onDelete: PropTypes.func
 }

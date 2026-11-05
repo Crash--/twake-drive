@@ -54,6 +54,15 @@ export const HistoryModal = ({ file, revisions, revisionsFetchStatus }) => {
   // Mirrors how file actions gate on the containing folder, since a file
   // shared through its parent is not keyed by its own id.
   const canDeleteVersions = hasWriteAccess(file.dir_id, file.driveId)
+  // shortcut: the stack has no revert route for shared drives yet, so only
+  // files of the caller's own instance can be restored.
+  const canRestore = canDeleteVersions && !file.driveId
+  const restore = async revision => {
+    await client
+      .getStackClient()
+      .fetchJSON('POST', `/files/revert/${revision.id}`)
+    navigate('..')
+  }
 
   return (
     <>
@@ -90,6 +99,7 @@ export const HistoryModal = ({ file, revisions, revisionsFetchStatus }) => {
                         generateFileNameForRevision(file, revision, f)
                       )
                     }
+                    onRestore={canRestore ? () => restore(revision) : undefined}
                     onDelete={
                       canDeleteVersions
                         ? () => setVersionToDelete(revision)
