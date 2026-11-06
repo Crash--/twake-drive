@@ -473,6 +473,11 @@ describe('computeFileType', () => {
     expect(computeFileType(file)).toBe('directory')
   })
 
+  it('should return "docs" for a Docs pointer moved without its metadata', () => {
+    const file = { _type: 'io.cozy.files', type: 'file', name: 'a.docs-note' }
+    expect(computeFileType(file)).toBe('docs')
+  })
+
   it('should return "shared-drive-file" for a recipient shared-drive file nested in a folder', () => {
     // A file a recipient sees inside a shared drive (e.g. from Recents or
     // Search, fed by the dataproxy) carries a `driveId` but lives in a regular
@@ -550,6 +555,13 @@ describe('computeApp', () => {
 })
 
 describe('computePath', () => {
+  it('opens a Docs pointer by its file id, not the document it names', () => {
+    const copy = { _id: 'copy-id', metadata: { externalId: 'source-id' } }
+    expect(computePath(copy, { type: 'docs', pathname: '/folder' })).toBe(
+      '/bridge/docs/copy-id'
+    )
+  })
+
   it('should return correct path for trash', () => {
     expect(computePath({}, { type: 'trash', pathname: '/any/path' })).toBe(
       '/trash'

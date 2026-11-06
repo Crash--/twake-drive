@@ -84,7 +84,12 @@ export const computeFileType = (
     } else {
       return 'public-note'
     }
-  } else if (isDocs(file)) {
+  } else if (
+    isDocs(file) ||
+    (!file.driveId && file.name?.endsWith('.docs-note'))
+  ) {
+    // Without metadata too: a pointer moved from another instance gets them back
+    // once rewritten, and the docs app waits for that.
     return 'docs'
   } else if (isGrist(file)) {
     return 'grist'
@@ -215,7 +220,9 @@ export const computePath = (
         return `/note/${file._id}`
       }
     case 'docs':
-      return `/bridge/docs/${(file as IOCozyFile).metadata.externalId}`
+      // The file id, never metadata.externalId: a copy not rewritten yet still names
+      // its source there, and the docs app would open the source.
+      return `/bridge/docs/${file._id}`
     case 'docs-root':
       return `/bridge/docs/${file._id}`
     case 'grist':
