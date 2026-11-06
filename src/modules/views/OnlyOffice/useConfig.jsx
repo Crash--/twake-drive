@@ -129,6 +129,9 @@ const useConfig = () => {
         }),
         customization: {
           ...serverEditorConfig?.customization,
+          // The compact header moves buttons into the ribbon, which then has no
+          // room for the scribe button of the Plugins tab beside the panel
+          ...(!isPdfDoc && { compactHeader: false }),
           reviewDisplay: 'markup'
         },
         // The AI plugin of the editor would sit beside the assistant of

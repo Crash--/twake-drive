@@ -245,12 +245,14 @@ describe('useConfig', () => {
     expect(result.current.config).toBeUndefined()
   })
 
+  // The compact header moves buttons into the ribbon, which then has no room
+  // for the scribe button of the Plugins tab beside the scribe panel
   it.each([
-    ['an office document', officeDocWithoutPublicName],
-    ['a PDF', pdfOfficeDoc]
+    ['an office document', false, officeDocWithoutPublicName],
+    ['a PDF', true, pdfOfficeDoc]
   ])(
-    'gives the editor the whole customization of the stack for %s',
-    async (_, doc) => {
+    'gives the editor the customization of the stack for %s, compact header %s',
+    async (_, compactHeader, doc) => {
       flag.mockImplementation(
         name => name === 'drive.onlyoffice.pdf-editing.enabled'
       )
@@ -289,7 +291,11 @@ describe('useConfig', () => {
 
       expect(
         result.current.config.docEditorConfig.editorConfig.customization
-      ).toEqual({ ...stackCustomization, reviewDisplay: 'markup' })
+      ).toEqual({
+        ...stackCustomization,
+        compactHeader,
+        reviewDisplay: 'markup'
+      })
     }
   )
 
