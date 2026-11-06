@@ -65,6 +65,9 @@ const Editor = ({
 
   const editor = useCreateBlockNote({
     schema,
+    // The block-type animation leaves data-prev-* attributes on the blocks
+    // synced from Yjs at load time, which breaks the heading styles.
+    animations: false,
     extensions: [
       CommentsExtension({
         threadStore,
