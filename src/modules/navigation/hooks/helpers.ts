@@ -90,6 +90,14 @@ export const computeFileType = (
     return 'grist'
   } else if (isExcalidraw(file) && isExcalidrawEnabled) {
     return 'excalidraw'
+  } else if (
+    file.driveId &&
+    isResolvableFileRootSharedDriveShortcut(file) &&
+    file.name?.endsWith('.docs-note')
+  ) {
+    // A Docs pointer shared as a file-root drive: the recipient's entry has no
+    // externalId, but its id is the shared file's, the Docs document id.
+    return 'docs-root'
   } else if (file.driveId && isResolvableFileRootSharedDriveShortcut(file)) {
     // File-root shared drives are materialized on the recipient as `.url`
     // shortcuts (`class: 'shortcut'`, mime `application/internet-shortcut`),
@@ -149,6 +157,7 @@ export const computeApp = (type: string): string => {
     case 'public-note-same-instance':
       return 'notes'
     case 'docs':
+    case 'docs-root':
       return 'docs'
     case 'grist':
       return 'grist'
@@ -207,6 +216,8 @@ export const computePath = (
       }
     case 'docs':
       return `/bridge/docs/${(file as IOCozyFile).metadata.externalId}`
+    case 'docs-root':
+      return `/bridge/docs/${file._id}`
     case 'grist':
       return `/bridge/grist/${(file as IOCozyFile).metadata.externalId}`
     case 'shortcut':
