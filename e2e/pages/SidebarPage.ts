@@ -21,6 +21,16 @@ export class SidebarPage {
     await this.page.goto(url.toString())
   }
 
+  /** In-app click, so the app's own routing runs (no reload). */
+  async goToMyDrive(): Promise<void> {
+    await this.nav
+      .getByRole('link', {
+        name: new RegExp(escapeRegExp(t('Nav.item_drive')), 'i')
+      })
+      .first()
+      .click()
+  }
+
   async goToRecent(): Promise<void> {
     await this.nav
       .getByRole('link', {
