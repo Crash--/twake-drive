@@ -1,7 +1,8 @@
 name: E2E resumable uploads
 
-# Runs the Drive suite of linagora/twake-drive#4610 on a stack built from
-# Crash--/cozy-stack#7 (35352cdda), which announces resumable_uploads.
+# Runs the Drive suite of linagora/twake-drive#4610 (eca915429) on a stack
+# built from Crash--/cozy-stack#7 (35352cdda), which announces
+# resumable_uploads.
 on:
   push:
     branches: [ci/e2e-resumable-upload]
@@ -11,7 +12,7 @@ permissions:
 
 jobs:
   e2e:
-    uses: linagora/twake-drive/.github/workflows/e2e.yml@feat/resumable-upload
+    uses: linagora/twake-drive/.github/workflows/e2e.yml@eca9154296d2bea1d6eeb2cec72ce9dfdd9a1d63
     with:
-      drive-ref: feat/resumable-upload
+      drive-ref: eca9154296d2bea1d6eeb2cec72ce9dfdd9a1d63
       stack-image: ttl.sh/twake-stack-resumable-bfe6d6744ebe:24h
