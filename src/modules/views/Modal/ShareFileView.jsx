@@ -6,6 +6,9 @@ import flag from 'cozy-flags'
 import { ShareModal } from 'cozy-sharing'
 
 import { LoaderModal } from '@/components/LoaderModal'
+import { pointerAppOf } from '@/modules/externalApps/pointerApps'
+import { usePointerApps } from '@/modules/externalApps/usePointerApps'
+import { PointerShareDialog } from '@/modules/views/Modal/PointerShareDialog'
 import { getSharingsRootRoute } from '@/modules/views/Sharings/routes'
 import {
   buildFileOrFolderByIdQuery,
@@ -21,6 +24,7 @@ const ShareFileView = () => {
     ? buildSharedDriveFileOrFolderByIdQuery({ fileId, driveId })
     : buildFileOrFolderByIdQuery(fileId)
   const fileResult = useQuery(fileQuery.definition, fileQuery.options)
+  const { apps, loaded: appsLoaded } = usePointerApps()
 
   const handleExit = () => {
     navigate({ pathname: '..', search }, { replace: true })
@@ -30,7 +34,17 @@ const ShareFileView = () => {
     navigate(getSharingsRootRoute(pathname), { replace: true })
   }
 
-  if (hasQueryBeenLoaded(fileResult) && fileResult.data) {
+  // The document of a pointer is shared by its app, never as a file
+  if (
+    hasQueryBeenLoaded(fileResult) &&
+    fileResult.data &&
+    pointerAppOf(apps, fileResult.data)
+  ) {
+    return <PointerShareDialog file={fileResult.data} onClose={handleExit} />
+  }
+
+  // Until the apps are known, a pointer could be taken for a plain file
+  if (hasQueryBeenLoaded(fileResult) && fileResult.data && appsLoaded) {
     return (
       <ShareModal
         document={fileResult.data}

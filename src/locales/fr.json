@@ -153,6 +153,7 @@
     "share": {
       "cta": "Partager",
       "title": "Partager",
+      "unavailable": "Le partage est indisponible pour le moment. Rien n'a été modifié.",
       "details": {
         "title": "Détails du partage",
         "createdAt": "Depuis le %{date}",

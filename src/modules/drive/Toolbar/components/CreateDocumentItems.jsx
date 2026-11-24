@@ -8,6 +8,7 @@ import CreateExcalidrawItem from '@/modules/drive/Toolbar/components/CreateExcal
 import CreateGristItem from '@/modules/drive/Toolbar/components/CreateGristItem'
 import CreateNoteItem from '@/modules/drive/Toolbar/components/CreateNoteItem'
 import CreateOnlyOfficeItem from '@/modules/drive/Toolbar/components/CreateOnlyOfficeItem'
+import CreatePointerItems from '@/modules/drive/Toolbar/components/CreatePointerItems'
 import { isOfficeEditingEnabled } from '@/modules/views/OnlyOffice/helpers'
 
 // The "create a document" entries of the add menu (note, docs, excalidraw,
@@ -32,6 +33,13 @@ const CreateDocumentItems = ({
       )}
       {!isPublic && flag('drive.lasuitedocs.enabled') && (
         <CreateDocsItem
+          displayedFolder={displayedFolder}
+          isReadOnly={isReadOnly}
+          onClick={onClick}
+        />
+      )}
+      {!isPublic && (
+        <CreatePointerItems
           displayedFolder={displayedFolder}
           isReadOnly={isReadOnly}
           onClick={onClick}

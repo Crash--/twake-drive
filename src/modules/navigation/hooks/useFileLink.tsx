@@ -9,6 +9,12 @@ import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
 import type { File } from '@/components/FolderPicker/types'
 import { joinPath } from '@/lib/path'
 import {
+  clientURLOf,
+  fillRoute,
+  pointerAppOf
+} from '@/modules/externalApps/pointerApps'
+import { usePointerApps } from '@/modules/externalApps/usePointerApps'
+import {
   computeFileType,
   computeApp,
   computePath
@@ -106,7 +112,18 @@ const useFileLink = (
     isPublic,
     cozyUrl
   })
-  const app = computeApp(type)
+  // A pointer file is opened by the app that declares its mime type, at the
+  // path of its manifest, on its client URL (ADR 052)
+  const { apps } = usePointerApps()
+  const pointer = pointerAppOf(apps, file)
+  const pointerBaseURL = pointer?.route.open ? clientURLOf(pointer.app) : null
+  const pointerHref =
+    pointer?.route.open && pointerBaseURL
+      ? `${pointerBaseURL}${fillRoute(pointer.route.open, {
+          externalId: (file.metadata as { externalId: string }).externalId
+        })}`
+      : null
+  const app = pointerHref && pointer ? pointer.app.slug : computeApp(type)
   const path = computePath(file, {
     type,
     pathname,
@@ -154,8 +171,9 @@ const useFileLink = (
 
   // nextcloud-file is a special case because Nextcloud are not in cozy ecosystem
   // so we open their link directly
-  const href =
-    type === 'nextcloud-file'
+  const href = pointerHref
+    ? pointerHref
+    : type === 'nextcloud-file'
       ? path
       : generateWebLink({
           slug: app,
