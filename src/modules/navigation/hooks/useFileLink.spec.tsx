@@ -23,6 +23,9 @@ jest.mock('cozy-ui/transpiled/react/providers/Breakpoints', () => ({
 jest.mock('@/modules/public/PublicProvider', () => ({
   usePublicContext: jest.fn(() => ({ isPublic: false }))
 }))
+jest.mock('@/modules/externalApps/usePointerApps', () => ({
+  usePointerApps: jest.fn(() => ({ apps: [], loaded: true }))
+}))
 
 describe('useFileLink with forceFolderPath', () => {
   const folder = {

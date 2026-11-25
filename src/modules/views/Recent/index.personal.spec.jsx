@@ -36,6 +36,10 @@ jest.mock('cozy-sharing', () => ({
   useSharingContext: jest.fn()
 }))
 jest.mock('cozy-dataproxy-lib', () => ({ useDataProxy: jest.fn(() => ({})) }))
+// The stack client of this test serves no apps
+jest.mock('@/modules/externalApps/usePointerApps', () => ({
+  usePointerApps: () => ({ apps: [], loaded: true })
+}))
 jest.mock('cozy-ui-plus/dist/FileImageLoader', () => ({ file, linkType }) => (
   <div data-testid="FileImageLoader" data-link={file.links?.[linkType]} />
 ))

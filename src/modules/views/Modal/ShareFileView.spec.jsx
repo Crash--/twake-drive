@@ -38,6 +38,22 @@ jest.mock('@/components/LoaderModal', () => ({
   LoaderModal: () => <div>Loading</div>
 }))
 
+jest.mock('@/modules/views/Modal/PointerShareDialog', () => ({
+  PointerShareDialog: () => <div>Intent</div>
+}))
+
+const mockApps = [
+  {
+    slug: 'boards',
+    pointers: [
+      { mime: 'application/vnd.example.board', open: '/b/{externalId}' }
+    ]
+  }
+]
+jest.mock('@/modules/externalApps/usePointerApps', () => ({
+  usePointerApps: () => ({ apps: mockApps, loaded: true })
+}))
+
 jest.mock('@/queries', () => ({
   buildFileOrFolderByIdQuery: jest.fn(() => ({
     definition: 'file-definition',
@@ -95,6 +111,24 @@ describe('ShareFileView', () => {
       `/sharings/${SHARING_TAB_WITH_ME}`,
       { replace: true }
     )
+  })
+
+  it('shares a pointer through the app that declares its mime type', () => {
+    mockUseParams.mockReturnValue({ fileId: 'file-id' })
+    useQuery.mockReturnValue({
+      data: {
+        id: 'file-id',
+        name: 'Plan',
+        mime: 'application/vnd.example.board',
+        metadata: { externalId: 'b1' }
+      },
+      fetchStatus: 'loaded'
+    })
+
+    render(<ShareFileView />)
+
+    expect(screen.getByText('Intent')).toBeInTheDocument()
+    expect(ShareModal).not.toHaveBeenCalled()
   })
 
   it('should preserve search params when closing the modal', () => {
