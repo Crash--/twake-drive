@@ -1,6 +1,7 @@
 import type { Locator, Page } from '@playwright/test'
 
 import { escapeRegExp, expect, expectRowDisabled } from '../helpers/fixtures'
+import { t } from '../helpers/i18n'
 
 /**
  * Page object for the MoveTo destination picker.
@@ -33,23 +34,33 @@ export class MoveToPage {
   }
 
   get driveTab(): Locator {
-    return this.dialog.getByRole('tab', { name: /my drive/i })
+    return this.dialog.getByRole('tab', {
+      name: t('Nav.item_drive')
+    })
   }
 
   get sharingsTab(): Locator {
-    return this.dialog.getByRole('tab', { name: /sharings/i })
+    return this.dialog.getByRole('tab', {
+      name: t('Nav.item_sharings')
+    })
   }
 
   get createFolderButton(): Locator {
-    return this.dialog.getByRole('button', { name: /create folder/i })
+    return this.dialog.getByRole('button', {
+      name: t('Move.addFolder')
+    })
   }
 
   get cancelButton(): Locator {
-    return this.dialog.getByRole('button', { name: /^cancel$/i })
+    return this.dialog.getByRole('button', {
+      name: new RegExp(`^${escapeRegExp(t('Move.cancel'))}$`, 'i')
+    })
   }
 
   get moveButton(): Locator {
-    return this.dialog.getByRole('button', { name: /^move$/i })
+    return this.dialog.getByRole('button', {
+      name: new RegExp(`^${escapeRegExp(t('Move.action'))}$`, 'i')
+    })
   }
 
   get dialogLocator(): Locator {
@@ -79,7 +90,9 @@ export class MoveToPage {
   }
 
   get creationInput(): Locator {
-    return this.dialog.getByRole('textbox', { name: /folder name/i })
+    return this.dialog.getByRole('textbox', {
+      name: t('Move.folderName')
+    })
   }
 
   async waitForOpen(): Promise<void> {
@@ -98,16 +111,44 @@ export class MoveToPage {
   async openSharings(): Promise<void> {
     await this.sharingsTab.click()
     await expect(this.sharingsTab).toHaveAttribute('aria-selected', 'true')
-    await expect(this.breadcrumb).toHaveText('Sharings')
+    await expect(this.breadcrumb).toHaveText(t('Nav.item_sharings'))
   }
 
-  folderRow(name: string): Locator {
+  async folderRow(name: string): Promise<Locator> {
     const splitAt = Math.ceil(name.length / 2)
     const prefix = name.slice(0, splitAt)
     const suffix = name.slice(splitAt)
-    return this.dialog.getByRole('row', {
+    const row: Locator = this.dialog.getByRole('row', {
       name: new RegExp(`^${escapeRegExp(prefix)}.*${escapeRegExp(suffix)}`)
     })
+    const scroller: Locator = this.dialog.getByTestId('virtuoso-scroller')
+
+    // Virtualized rows must be mounted before Playwright can scroll to them.
+    await expect
+      .poll(
+        async (): Promise<number> => {
+          const count: number = await row.count()
+          if (count === 0) {
+            await scroller.evaluate((element: HTMLElement) => {
+              const maxScrollTop: number =
+                element.scrollHeight - element.clientHeight
+              element.scrollTop =
+                element.scrollTop >= maxScrollTop
+                  ? 0
+                  : Math.min(
+                      element.scrollTop + element.clientHeight,
+                      maxScrollTop
+                    )
+            })
+          }
+          return count
+        },
+        { intervals: [50], timeout: 5_000 }
+      )
+      .toBeGreaterThan(0)
+
+    await row.scrollIntoViewIfNeeded()
+    return row
   }
 
   row(name: string): Locator {
@@ -121,18 +162,21 @@ export class MoveToPage {
   }
 
   async folderId(name: string): Promise<string> {
-    const folderId = await this.folderRow(name).getAttribute('data-file-id')
+    const row: Locator = await this.folderRow(name)
+    const folderId = await row.getAttribute('data-file-id')
     if (!folderId) throw new Error(`No folder id found for ${name}`)
     return folderId
   }
 
   async selectFolder(name: string): Promise<void> {
-    await this.folderRow(name).click()
+    const row: Locator = await this.folderRow(name)
+    await row.click()
     await expect(this.moveButton).toBeEnabled()
   }
 
   async openFolder(name: string): Promise<void> {
-    await this.folderRow(name).dblclick()
+    const row: Locator = await this.folderRow(name)
+    await row.dblclick()
     await expect(
       this.dialog.getByTestId('file-picker-breadcrumb')
     ).toContainText(name)
@@ -144,7 +188,7 @@ export class MoveToPage {
   }
 
   async expectFolderDisabled(name: string, reason: RegExp): Promise<void> {
-    const row = this.folderRow(name)
+    const row: Locator = await this.folderRow(name)
     await expect(row).toHaveAttribute('aria-disabled', 'true')
     await expect(row).toHaveAccessibleName(reason)
     await row.getByTestId('picker-item-name').hover()
@@ -164,11 +208,17 @@ export class MoveToPage {
   ): Promise<void> {
     const confirmDialog = this.page.getByRole('dialog', {
       name: new RegExp(
-        `Moving outside the ${escapeRegExp(sharedFolderName)} folder`
+        escapeRegExp(
+          t('Move.outsideSharedFolder.title', {
+            sharedFolder: sharedFolderName
+          })
+        )
       )
     })
     await expect(confirmDialog).toBeVisible()
-    await confirmDialog.getByRole('button', { name: 'I understand' }).click()
+    await confirmDialog
+      .getByRole('button', { name: t('Move.outsideSharedFolder.confirm') })
+      .click()
   }
 
   async expectPartialResult(
@@ -177,9 +227,10 @@ export class MoveToPage {
   ): Promise<void> {
     await expect(
       this.page.getByText(
-        new RegExp(
-          `(Moved: ${successfulCount}\\. Failed: ${failedCount}\\.|Déplacés : ${successfulCount}\\. Échecs : ${failedCount}\\.)`
-        )
+        t('Move.partialError', {
+          successCount: successfulCount,
+          failureCount: failedCount
+        })
       )
     ).toBeVisible()
   }
@@ -187,9 +238,7 @@ export class MoveToPage {
   async expectTotalFailure(): Promise<void> {
     await expect(this.dialog).toBeVisible()
     await expect(
-      this.page.getByText(
-        /Something went wrong while moving these elements|Une erreur est survenue pendant le déplacement de ces éléments/i
-      )
+      this.page.getByText(t('Move.error', { smart_count: 2 }))
     ).toBeVisible()
     await expect(this.moveButton).toBeEnabled()
     await expect(this.cancelButton).toBeEnabled()
@@ -211,14 +260,23 @@ export class MoveToPage {
     await expect(this.moveButton).toBeEnabled()
     await expect(this.cancelButton).toBeEnabled()
     await expect(
-      this.dialog.getByRole('button', { name: /retry/i })
+      this.dialog.getByRole('button', {
+        name: t('Viewer.loading.retry')
+      })
     ).toHaveCount(0)
   }
 
-  async expectSuccessNotification(name: string): Promise<void> {
+  async expectSuccessNotification(
+    name: string,
+    destination: string
+  ): Promise<void> {
     await expect(
       this.page.getByRole('alert').filter({
-        hasText: new RegExp(`${escapeRegExp(name)}.*moved`)
+        hasText: t('Move.success', {
+          smart_count: 1,
+          subject: name,
+          target: destination
+        })
       })
     ).toBeVisible()
   }
@@ -231,10 +289,19 @@ export class MoveToPage {
   async confirmSharedFolderMove(): Promise<void> {
     await this.clickMove()
     const confirmation = this.page.getByRole('dialog').filter({
-      has: this.page.getByText(/^Move to a shared folder\?$/i)
+      has: this.page.getByText(
+        new RegExp(`^${escapeRegExp(t('Move.insideSharedFolder.title'))}$`, 'i')
+      )
     })
     await expect(confirmation).toBeVisible()
-    await confirmation.getByRole('button', { name: /^ok$/i }).click()
+    await confirmation
+      .getByRole('button', {
+        name: new RegExp(
+          `^${escapeRegExp(t('Move.insideSharedFolder.confirm'))}$`,
+          'i'
+        )
+      })
+      .click()
     await expect(confirmation).toBeHidden()
     await expect(this.dialog).toBeHidden()
   }
@@ -245,9 +312,8 @@ export class MoveToPage {
   }
 
   async isFolderSelected(name: string): Promise<boolean> {
-    return this.folderRow(name).evaluate(row =>
-      row.classList.contains('Mui-selected')
-    )
+    const row: Locator = await this.folderRow(name)
+    return row.evaluate(row => row.classList.contains('Mui-selected'))
   }
 
   get breadcrumb(): Locator {
